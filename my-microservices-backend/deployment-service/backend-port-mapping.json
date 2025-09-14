@@ -1,0 +1,20 @@
+{
+  "testyfy": {
+    "requestPort": 5555
+  },
+  "testyfytwo": {
+    "requestPort": 4000
+  },
+  "testyfythree": {
+    "requestPort": 4001
+  },
+  "testyfyfoor": {
+    "requestPort": 4002
+  },
+  "logs": {
+    "requestPort": 5555
+  },
+  "webservice": {
+    "requestPort": 5555
+  }
+}
