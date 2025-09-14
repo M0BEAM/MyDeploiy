@@ -1,0 +1,108 @@
+enum ProjectType {
+    WEB_SERVICE
+    STATIC_SITE
+}
+
+generator client {
+    provider = "prisma-client-js"
+    output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model User {
+    id        String   @id @default(uuid())
+    name      String
+    email     String   @unique
+    password  String // Hashed password
+    role      String   @default("user")
+    createdAt DateTime @default(now())
+    updatedAt DateTime @default(now()) @updatedAt
+
+    // Relations
+    projects Project[]
+    deploy   Deploy[]
+}
+
+model Project {
+    id        String       @id @default(uuid())
+    name      String
+    type      ProjectType?
+    createdAt DateTime     @default(now())
+    updatedAt DateTime     @default(now()) @updatedAt
+
+    // Relations
+    user   User   @relation(fields: [userId], references: [id])
+    userId String
+
+    deploy Deploy[]
+}
+
+model Deploy {
+    id           String    @id @default(uuid())
+    subdomain    String    @unique
+    repoUrl      String?
+    method       String
+    type         String
+    status       String    @default("pending")
+    category     String?
+    auth         String?
+    startedAt    DateTime  @default(now())
+    endedAt      DateTime? @default(now())
+    duration     Int?
+    errorMessage String?
+    updatedAt    DateTime  @default(now()) @updatedAt
+
+    //Relations
+    user                User                  @relation(fields: [userId], references: [id])
+    userId              String
+    Project             Project?              @relation(fields: [projectId], references: [id])
+    projectId           String?
+    log                 Log[]
+    metric              Metric[]
+    event               Event[]
+    EnvironmentVariable EnvironmentVariable[]
+}
+
+model Log {
+    id        String   @id @default(uuid())
+    message   String
+    level     String // INFO, ERROR, DEBUG, etc.
+    timestamp DateTime @default(now())
+    // Relations
+    Deploy    Deploy?  @relation(fields: [deployId], references: [id])
+    deployId  String?
+}
+
+model Metric {
+    id        String   @id @default(uuid())
+    cpu       Float
+    memory    Float
+    network   Float
+    timestamp DateTime @default(now())
+
+    // Relations
+    Deploy   Deploy? @relation(fields: [deployId], references: [id])
+    deployId String?
+}
+
+model Event {
+    id          String   @id @default(uuid())
+    type        String // e.g., "DEPLOYMENT", "ERROR", "UPDATE"
+    description String
+    timestamp   DateTime @default(now())
+    // Relations
+    Deploy      Deploy?  @relation(fields: [deployId], references: [id])
+    deployId    String?
+}
+
+model EnvironmentVariable {
+    id       String  @id @default(uuid())
+    key      String
+    value    String
+    Deploy   Deploy? @relation(fields: [deployId], references: [id])
+    deployId String?
+}

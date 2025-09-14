@@ -1,0 +1,93 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: main
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./prisma/migrations:/docker-entrypoint-initdb.d
+    networks:
+      - app-network
+    ports:
+      - "5433:5432"  # Host port 5433 mapped to container port 5432
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d main"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis
+    restart: always
+    ports:
+      - "6379:6379"
+    networks:
+      - app-network
+
+  # Migration service: Runs the Prisma migrations and exits
+  migrate:
+    build:
+      context: .
+      dockerfile: ./deployment-service/Dockerfile
+    command: ["npx", "prisma", "migrate", "deploy", "--schema=./prisma/schema.prisma"]
+    environment:
+      DATABASE_URL: postgresql://admin:secret@postgres:5432/main
+    networks:
+      - app-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  user-service:
+    build:
+      context: .
+      dockerfile: ./user-service/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://admin:secret@postgres:5432/main
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    ports:
+      - 3002:3011
+    networks:
+      - app-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  deployment-service:
+    build:
+      context: .
+      dockerfile: ./deployment-service/Dockerfile
+    env_file:
+      - .env
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    ports:
+      - 3001:3010
+      - 3009:3009  # TCP microservice port
+    volumes:
+      - public_sites:/app/public/sites
+    networks:
+      - app-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      migrate:
+        condition: service_completed_successfully
+
+volumes:
+  postgres_data:
+  public_sites:
+
+networks:
+  app-network:
+    driver: bridge
