@@ -1,0 +1,81 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type Log {
+  id: String!
+  message: String!
+  level: String!
+  timestamp: DateTime!
+  projectId: String
+  serviceId: String
+  staticSiteId: String
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type Metric {
+  id: String!
+  key: String!
+  value: Float!
+  unit: String!
+  timestamp: DateTime!
+  projectId: String
+  serviceId: String
+  staticSiteId: String
+}
+
+type Event {
+  id: String!
+  type: String!
+  description: String!
+  timestamp: DateTime!
+  userId: String
+  projectId: String
+  serviceId: String
+  staticSiteId: String
+}
+
+type Query {
+  logs: [Log!]!
+  log(id: Int!): Log!
+  metrics: [Metric!]!
+  metric(id: Int!): Metric!
+  events: [Event!]!
+  event(id: Int!): Event!
+}
+
+type Mutation {
+  createLog(createLogInput: CreateLogInput!): Log!
+  createMetric(createMetricInput: CreateMetricInput!): Metric!
+  createEvent(createEventInput: CreateEventInput!): Event!
+}
+
+input CreateLogInput {
+  message: String!
+  level: String!
+  projectId: String
+  serviceId: String
+  staticSiteId: String
+}
+
+input CreateMetricInput {
+  key: String!
+  value: Float!
+  unit: String!
+  projectId: String
+  serviceId: String
+  staticSiteId: String
+}
+
+input CreateEventInput {
+  type: String!
+  description: String!
+  userId: String
+  projectId: String
+  serviceId: String
+  staticSiteId: String
+}
